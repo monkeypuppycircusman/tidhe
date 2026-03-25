@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TÍDHE — Enchanted Conch</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=DM+Mono:wght@300;400&family=Cormorant+Garamond:ital,wght@0,300;1,300;1,400&display=swap');
+
+:root {
+  --void:   #03020a;
+  --deep:   #07050f;
+  --murk:   #0d0a1a;
+  --fog:    #151028;
+  --mist:   #1e1830;
+  --ecto:   #7affcc;
+  --soul:   #c060ff;
+  --text:   #8a8598;
+  --text2:  #504860;
+  --text3:  #2a2438;
+
+  /* ── Seelie court: moonlight silver-white ── */
+  --seelie:    #c8e8ff;
+  --seelie2:   #e8f4ff;
+  --seelie3:   #ffffff;
+  --seelie-dim:#081828;
+
+  /* ── Unseelie court: deep violet-black ── */
+  --unseelie:  #8040c0;
+  --unseelie2: #b060ff;
+  --unseelie3: #d090ff;
+  --unseelie-dim:#140820;
+
+  /* ── Wild court: verdant green-gold ── */
+  --wild:      #40c060;
+  --wild2:     #70e090;
+  --wild3:     #a0f0b0;
+  --wild-dim:  #081408;
+
+  /* Active court (updated by JS) */
+  --court:     #c8e8ff;
+  --court2:    #e8f4ff;
+  --court-dim: #081828;
+
+  --mono:  'DM Mono', monospace;
+  --serif: 'Cormorant Garamond', serif;
+  --goth:  'UnifrakturMaguntia', cursive;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%;
+  background: var(--void);
+  overflow: hidden;
+  font-family: var(--mono);
+  cursor: none;
+}
+
+#cursor {
+  position: fixed; width: 24px; height: 24px;
+  pointer-events: none; z-index: 9999;
+  transform: translate(-50%,-50%);
+}
+#cursor svg { width: 100%; height: 100%; }
+
+#atmos { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+
+#app {
+  position: relative; width: 100vw; height: 100vh;
+  display: flex; flex-direction: column; z-index: 1;
+}
+
+/* ── HEADER ── */
+#hdr {
+  flex-shrink: 0; padding: 18px 28px 14px;
+  display: flex; align-items: baseline; gap: 18px;
+  border-bottom: 1px solid var(--text3);
+  background: linear-gradient(180deg, rgba(7,5,15,.97) 0%, transparent 100%);
+  position: relative; z-index: 2;
+  transition: border-color .8s;
+}
+#logo {
+  font-family: var(--goth); font-size: 36px;
+  color: var(--seelie);
+  text-shadow: 0 0 22px var(--seelie), 0 0 60px rgba(200,232,255,.2);
+  letter-spacing: 4px; line-height: 1;
+  transition: color .8s, text-shadow .8s;
+}
+#logo-sub {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 3px;
+  color: var(--text3); text-transform: uppercase;
+}
+#hdr-stats { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+.hstat { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--text3); text-transform: uppercase; }
+.hstat span { color: var(--text2); transition: color .3s; }
+.hstat span.lit { color: var(--seelie2); text-shadow: 0 0 8px var(--seelie); transition: color .3s, text-shadow .3s; }
+#power-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text3); transition: all .4s; }
+#power-dot.on { background: var(--seelie); box-shadow: 0 0 8px var(--seelie), 0 0 24px rgba(200,232,255,.4); }
+
+/* ── MAIN ── */
+#main { flex: 1; display: flex; overflow: hidden; position: relative; }
+#main::before {
+  content: ''; position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(200,232,255,.01) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200,232,255,.01) 1px, transparent 1px);
+  background-size: 60px 50px; pointer-events: none;
+  transition: background-image .8s;
+}
+
+/* ── CONCH STAGE ── */
+#conch-stage {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 12px 20px 0; gap: 14px;
+  position: relative; z-index: 1;
+}
+
+/* Stage glow */
+#stage-glow {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 60% 70% at 50% 52%, rgba(200,232,255,.0) 0%, transparent 70%);
+  pointer-events: none; transition: background 1s;
+}
+
+/* ── CONCH SVG ── */
+#conch-wrap {
+  position: relative; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+
+#conch-svg {
+  width: auto; height: 260px;
+  filter: drop-shadow(0 0 20px rgba(200,232,255,.1));
+  transition: filter 1s;
+  cursor: pointer;
+}
+
+/* Shell glow pulse */
+#conch-svg.breathing {
+  animation: shellbreathe 2s ease-in-out infinite;
+}
+@keyframes shellbreathe {
+  0%,100% { filter: drop-shadow(0 0 18px rgba(200,232,255,.1)); }
+  50%      { filter: drop-shadow(0 0 40px rgba(200,232,255,.35)); }
+}
+
+/* Breath ring that expands on blow */
+.breath-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(200,232,255,.5);
+  pointer-events: none;
+  animation: breathring 1.4s ease-out forwards;
+}
+@keyframes breathring {
+  0%   { width: 20px; height: 20px; margin: -10px; opacity: .9; }
+  100% { width: 200px; height: 200px; margin: -100px; opacity: 0; }
+}
+
+/* ── BREATH BAR ── */
+#breath-section {
+  width: 100%; max-width: 520px; flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 4px;
+}
+
+#breath-outer {
+  width: 100%; height: 16px;
+  border: 1px solid var(--text3); border-radius: 8px;
+  background: var(--deep); overflow: hidden;
+  cursor: ew-resize; position: relative;
+}
+
+#breath-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, rgba(200,232,255,.3), rgba(200,232,255,.7));
+  border-radius: 8px;
+  transition: width .05s, background .8s;
+  position: relative;
+}
+#breath-fill::after {
+  content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 6px;
+  background: rgba(255,255,255,.6); border-radius: 0 8px 8px 0;
+  filter: blur(2px);
+}
+
+#breath-labels {
+  display: flex; justify-content: space-between;
+  font-family: var(--mono); font-size: 7px; letter-spacing: 2px;
+  color: var(--text3); text-transform: uppercase;
+}
+
+/* ── SPELL PADS ── */
+#spell-grid {
+  width: 100%; max-width: 520px; flex-shrink: 0;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+}
+
+.spell {
+  position: relative;
+  border: 1px solid var(--text3); border-radius: 3px;
+  background: rgba(7,5,15,.7);
+  cursor: pointer; padding: 10px 8px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  transition: all .2s; user-select: none; overflow: hidden;
+}
+.spell::after {
+  content: ''; position: absolute; inset: 0;
+  opacity: 0; transition: opacity .1s; pointer-events: none;
+  border-radius: 2px;
+}
+.spell.hit::after { opacity: 1; }
+.spell.hit { border-color: var(--seelie); }
+.spell.hold-on { border-color: rgba(200,232,255,.35); background: rgba(200,232,255,.03); }
+
+.spell-icon {
+  font-size: 18px; line-height: 1; pointer-events: none;
+  filter: grayscale(1) brightness(.45); transition: filter .15s;
+}
+.spell.hit .spell-icon, .spell.hold-on .spell-icon {
+  filter: grayscale(0) brightness(1.1);
+}
+
+.spell-name {
+  font-family: var(--serif); font-style: italic; font-size: 11px; font-weight: 300;
+  color: var(--text2); pointer-events: none; transition: color .15s; text-align: center;
+}
+.spell.hit .spell-name, .spell.hold-on .spell-name { color: var(--seelie2); }
+
+.spell-key {
+  font-family: var(--mono); font-size: 7px; letter-spacing: 1.5px;
+  color: var(--text3); text-transform: uppercase; pointer-events: none;
+}
+
+.hold-pip {
+  position: absolute; top: 5px; right: 6px;
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--text3); transition: background .2s;
+}
+.spell.hold-on .hold-pip { background: var(--seelie); box-shadow: 0 0 4px var(--seelie); }
+
+.spell-ring {
+  position: absolute; width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--seelie); opacity: 0; pointer-events: none;
+}
+.spell.hit .spell-ring { animation: spellring .5s ease-out forwards; }
+@keyframes spellring {
+  0%   { opacity: .9; transform: scale(.3); }
+  100% { opacity: 0;  transform: scale(3); }
+}
+
+/* ── COURT SELECTOR ── */
+#court-row {
+  width: 100%; max-width: 520px; flex-shrink: 0;
+  display: flex; gap: 6px;
+}
+.court-btn {
+  flex: 1; padding: 7px 4px;
+  border: 1px solid var(--text3); border-radius: 3px;
+  background: transparent; cursor: pointer;
+  font-family: var(--serif); font-style: italic; font-size: 12px;
+  color: var(--text2); transition: all .3s; text-align: center;
+}
+.court-btn:hover { color: var(--seelie2); border-color: rgba(200,232,255,.3); }
+.court-btn.active { color: var(--seelie2); border-color: var(--seelie); background: rgba(200,232,255,.05); }
+.court-btn[data-court="unseelie"]:hover { color: var(--unseelie3); border-color: rgba(128,64,192,.4); }
+.court-btn[data-court="unseelie"].active { color: var(--unseelie3); border-color: var(--unseelie2); background: rgba(128,64,192,.06); }
+.court-btn[data-court="wild"]:hover { color: var(--wild3); border-color: rgba(64,192,96,.4); }
+.court-btn[data-court="wild"].active { color: var(--wild3); border-color: var(--wild2); background: rgba(64,192,96,.06); }
+
+/* ── WAVEFORM ── */
+#wave-bar {
+  flex-shrink: 0; height: 52px; background: var(--deep);
+  border-top: 1px solid var(--text3);
+  position: relative; z-index: 2; overflow: hidden;
+}
+#wave-canvas { width:100%;height:100%;display:block; }
+
+/* ── CONTROLS ── */
+#controls {
+  flex-shrink: 0;
+  background: linear-gradient(0deg, rgba(7,5,15,.98) 0%, transparent 100%);
+  border-top: 1px solid var(--text3);
+  padding: 10px 24px 14px;
+  display: flex; align-items: center; gap: 18px;
+  position: relative; z-index: 2; flex-wrap: wrap;
+}
+.cdiv { width:1px;height:32px;background:var(--text3);flex-shrink:0; }
+.kg { display:flex;flex-direction:column;align-items:center;gap:3px; }
+canvas.knob { cursor:ns-resize;display:block; }
+.kl { font-family:var(--mono);font-size:7px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3); }
+.kv { font-family:var(--mono);font-size:9px;color:var(--text2);min-width:32px;text-align:center; }
+
+#note-display { margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px; }
+#note-name {
+  font-family: var(--serif); font-size: 24px; font-style: italic; font-weight: 300;
+  color: var(--seelie2); text-shadow: 0 0 16px var(--seelie);
+  line-height: 1; min-width: 100px; text-align: right; transition: color .3s, text-shadow .3s;
+}
+#spell-display { font-family: var(--mono); font-size: 9px; color: var(--text2); letter-spacing: 1px; }
+#court-display {
+  font-family: var(--serif); font-style: italic; font-size: 11px;
+  color: rgba(200,232,255,.4); letter-spacing: .5px; transition: color .4s;
+}
+
+::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body>
+
+<!-- Cursor: fairy wing tip -->
+<div id="cursor">
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 12 C8 8 3 6 4 12 C5 16 10 16 12 12Z" fill="rgba(200,232,255,.18)" stroke="rgba(200,232,255,.7)" stroke-width=".8"/>
+    <path d="M12 12 C16 8 21 6 20 12 C19 16 14 16 12 12Z" fill="rgba(200,232,255,.12)" stroke="rgba(200,232,255,.55)" stroke-width=".8"/>
+    <circle cx="12" cy="12" r="1.5" fill="rgba(200,232,255,.9)"/>
+    <line x1="12" y1="12" x2="12" y2="21" stroke="rgba(200,232,255,.3)" stroke-width=".8" stroke-linecap="round"/>
+  </svg>
+</div>
+
+<canvas id="atmos"></canvas>
+
+<div id="app">
+  <div id="hdr">
+    <div>
+      <div id="logo">Tídhe</div>
+      <div id="logo-sub">Enchanted Conch · Three Courts of Fae</div>
+    </div>
+    <div id="hdr-stats">
+      <div class="hstat">Court <span id="hs-court">Seelie</span></div>
+      <div class="hstat">Spell <span id="hs-spell">—</span></div>
+      <div class="hstat">Breath <span id="hs-breath">0%</span></div>
+      <div id="power-dot"></div>
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="conch-stage">
+      <div id="stage-glow"></div>
+
+      <!-- CONCH SHELL SVG -->
+      <div id="conch-wrap">
+        <svg id="conch-svg" viewBox="0 0 320 270" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="shell-blur">
+              <feGaussianBlur stdDeviation="2" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="inner-glow">
+              <feGaussianBlur stdDeviation="4" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <radialGradient id="shell-body" cx="40%" cy="45%" r="60%">
+              <stop offset="0%"   stop-color="#f8e8d0"/>
+              <stop offset="35%"  stop-color="#e8c8a0"/>
+              <stop offset="65%"  stop-color="#c8a070"/>
+              <stop offset="100%" stop-color="#906030"/>
+            </radialGradient>
+            <radialGradient id="shell-inner" cx="50%" cy="50%" r="50%">
+              <stop offset="0%"   stop-color="#ffd0c0"/>
+              <stop offset="60%"  stop-color="#e09070"/>
+              <stop offset="100%" stop-color="#a05030"/>
+            </radialGradient>
+            <radialGradient id="enchant-glow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%"   stop-color="rgba(200,232,255,.5)" id="glow-center"/>
+              <stop offset="100%" stop-color="rgba(200,232,255,.0)"/>
+            </radialGradient>
+            <linearGradient id="spine-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%"  stop-color="#f0e0c8"/>
+              <stop offset="100%" stop-color="#b08050"/>
+            </linearGradient>
+          </defs>
+
+          <!-- ── ENCHANTMENT GLOW (behind shell) ── -->
+          <ellipse id="enchant-ellipse" cx="155" cy="145" rx="110" ry="95"
+            fill="url(#enchant-glow)" opacity=".0"/>
+
+          <!-- ── MAIN SHELL BODY ── -->
+          <!-- Outer whorl: large sweeping spiral -->
+          <path d="M 60 200
+                   C 30 180 20 140 30 100
+                   C 40 60 75 35 115 25
+                   C 155 15 200 22 230 48
+                   C 265 76 275 120 260 158
+                   C 245 196 210 220 170 228
+                   C 130 236 90 228 68 210
+                   Z"
+            fill="url(#shell-body)" stroke="rgba(160,100,50,.4)" stroke-width="1.2"/>
+
+          <!-- Shell growth ridges — the characteristic spiral bands -->
+          <g fill="none" stroke="rgba(120,75,35,.25)" stroke-width="1">
+            <path d="M 75 190 C 50 170 42 135 52 98 C 62 62 90 40 125 32"/>
+            <path d="M 90 205 C 62 184 52 146 60 105 C 70 65 100 42 138 32"/>
+            <path d="M 112 215 C 82 200 70 162 76 120 C 82 80 110 56 148 46"/>
+            <path d="M 138 220 C 108 210 95 175 100 132 C 105 92 132 68 168 60"/>
+            <path d="M 162 222 C 134 215 122 182 126 140 C 130 100 155 76 190 70"/>
+            <path d="M 190 218 C 164 214 152 184 156 144 C 160 106 182 84 216 80"/>
+          </g>
+
+          <!-- ── INNER SPIRE / APEX ── -->
+          <!-- The pointed tip of the conch -->
+          <path d="M 230 48 C 248 38 268 25 278 16 C 282 12 285 8 282 6
+                   C 279 4 274 6 268 10 C 258 16 244 28 232 42 Z"
+            fill="url(#spine-grad)" stroke="rgba(160,100,50,.5)" stroke-width="1"/>
+          <!-- Spire nodes -->
+          <circle cx="270" cy="18" r="4.5" fill="#d4b080" stroke="rgba(160,100,50,.4)" stroke-width=".8"/>
+          <circle cx="259" cy="26" r="3.5" fill="#c8a070" stroke="rgba(160,100,50,.35)" stroke-width=".7"/>
+          <circle cx="248" cy="35" r="3" fill="#c0986a" stroke="rgba(160,100,50,.3)" stroke-width=".6"/>
+          <!-- Spire ridge -->
+          <path d="M 232 42 C 242 34 254 24 264 16 C 268 13 272 11 274 13"
+            fill="none" stroke="rgba(255,240,210,.3)" stroke-width="1" stroke-linecap="round"/>
+
+          <!-- ── COLUMELLA (inner spiral axis) ── -->
+          <path d="M 60 200 C 80 210 110 218 140 215 C 165 212 185 200 190 185
+                   C 196 168 185 148 168 138 C 152 128 130 126 112 132
+                   C 94 138 82 155 85 172 C 88 186 100 196 115 198
+                   C 128 200 142 195 148 184 C 154 172 148 158 138 153
+                   C 128 148 115 152 112 162 C 109 171 116 180 126 180
+                   C 134 180 140 173 138 166"
+            fill="none" stroke="rgba(180,120,65,.35)" stroke-width="1.5"/>
+
+          <!-- ── APERTURE (the opening you blow into) ── -->
+          <path d="M 32 175 C 20 155 22 130 35 112 C 48 94 68 88 85 95
+                   C 100 100 108 115 105 130 C 102 145 88 153 75 150
+                   C 65 148 58 140 60 130 C 62 120 72 116 80 120"
+            fill="url(#shell-inner)" stroke="rgba(140,80,40,.5)" stroke-width="1.2"/>
+          <!-- Aperture shadow lip -->
+          <path d="M 32 175 C 20 155 22 130 35 112"
+            fill="none" stroke="rgba(80,40,15,.4)" stroke-width="2" stroke-linecap="round"/>
+          <!-- Inner aperture glow (where the sound comes from) -->
+          <ellipse id="aperture-glow" cx="68" cy="128" rx="28" ry="32"
+            fill="rgba(200,232,255,.0)" filter="url(#inner-glow)"/>
+
+          <!-- ── SHELL SURFACE HIGHLIGHTS ── -->
+          <path d="M 110 32 C 130 26 155 24 178 30"
+            fill="none" stroke="rgba(255,245,230,.25)" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M 88 50 C 100 42 118 37 135 36"
+            fill="none" stroke="rgba(255,245,230,.18)" stroke-width="1.2" stroke-linecap="round"/>
+          <!-- Iridescent shimmer patches -->
+          <ellipse cx="175" cy="80" rx="20" ry="12" fill="rgba(200,232,255,.06)" transform="rotate(-20 175 80)"/>
+          <ellipse cx="140" cy="55" rx="15" ry="8"  fill="rgba(200,232,255,.04)" transform="rotate(-15 140 55)"/>
+          <ellipse cx="200" cy="130" rx="18" ry="10" fill="rgba(200,232,255,.05)" transform="rotate(10 200 130)"/>
+
+          <!-- ── ENCHANTMENT RUNES (glow when active) ── -->
+          <g id="rune-group" opacity="0">
+            <!-- Tiny spiral runes around the shell -->
+            <path d="M 155 15 C 157 12 161 12 162 15 C 163 18 160 20 157 19" fill="none" stroke="rgba(200,232,255,.8)" stroke-width=".8"/>
+            <path d="M 240 90 C 242 87 246 87 247 90 C 248 93 245 95 242 94"  fill="none" stroke="rgba(200,232,255,.8)" stroke-width=".8"/>
+            <path d="M 255 165 C 257 162 261 162 262 165 C 263 168 260 170 257 169" fill="none" stroke="rgba(200,232,255,.8)" stroke-width=".8"/>
+            <path d="M 45 160 C 47 157 51 157 52 160 C 53 163 50 165 47 164"   fill="none" stroke="rgba(200,232,255,.8)" stroke-width=".8"/>
+            <circle cx="210" cy="55"  r="2" fill="none" stroke="rgba(200,232,255,.7)" stroke-width=".8"/>
+            <circle cx="270" cy="140" r="2" fill="none" stroke="rgba(200,232,255,.7)" stroke-width=".8"/>
+            <circle cx="90"  cy="195" r="2" fill="none" stroke="rgba(200,232,255,.7)" stroke-width=".8"/>
+          </g>
+
+          <!-- ── FLOATING MOTES (around shell when playing) ── -->
+          <g id="mote-group"></g>
+
+        </svg>
+      </div>
+
+      <!-- BREATH BAR -->
+      <div id="breath-section">
+        <div id="breath-outer">
+          <div id="breath-fill"></div>
+        </div>
+        <div id="breath-labels">
+          <span>whisper</span><span>gentle</span><span>strong</span><span>full blow</span>
+        </div>
+      </div>
+
+      <!-- COURT ROW -->
+      <div id="court-row">
+        <button class="court-btn active" data-court="seelie">✦ Seelie</button>
+        <button class="court-btn" data-court="unseelie">✦ Unseelie</button>
+        <button class="court-btn" data-court="wild">✦ Wild</button>
+      </div>
+
+      <!-- SPELL GRID -->
+      <div id="spell-grid">
+        <div class="spell" data-spell="blow-long"   data-key="q" data-hold="1"><div class="spell-ring"></div><div class="hold-pip"></div><div class="spell-icon">🌬</div><div class="spell-name">Long Blow</div><div class="spell-key">Q</div></div>
+        <div class="spell" data-spell="blow-short"  data-key="w"><div class="spell-ring"></div><div class="spell-icon">💨</div><div class="spell-name">Short Blow</div><div class="spell-key">W</div></div>
+        <div class="spell" data-spell="trill"       data-key="e"><div class="spell-ring"></div><div class="spell-icon">🎵</div><div class="spell-name">Trill</div><div class="spell-key">E</div></div>
+        <div class="spell" data-spell="overtone"    data-key="r" data-hold="1"><div class="spell-ring"></div><div class="hold-pip"></div><div class="spell-icon">✨</div><div class="spell-name">Overtone</div><div class="spell-key">R</div></div>
+        <div class="spell" data-spell="summon"      data-key="a"><div class="spell-ring"></div><div class="spell-icon">🌀</div><div class="spell-name">Summon</div><div class="spell-key">A</div></div>
+        <div class="spell" data-spell="ward"        data-key="s" data-hold="1"><div class="spell-ring"></div><div class="hold-pip"></div><div class="spell-icon">🛡</div><div class="spell-name">Ward</div><div class="spell-key">S</div></div>
+        <div class="spell" data-spell="lament"      data-key="d"><div class="spell-ring"></div><div class="spell-icon">🌧</div><div class="spell-name">Lament</div><div class="spell-key">D</div></div>
+        <div class="spell" data-spell="wild-call"   data-key="f" data-hold="1"><div class="spell-ring"></div><div class="hold-pip"></div><div class="spell-icon">🌿</div><div class="spell-name">Wild Call</div><div class="spell-key">F</div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="wave-bar"><canvas id="wave-canvas"></canvas></div>
+
+  <div id="controls">
+    <div class="kg">
+      <canvas class="knob" id="k-reverb"  width="42" height="42" data-min="0"   data-max="1"   data-val="0.7"  data-color="#c8e8ff"></canvas>
+      <div class="kl">Reverb</div><div class="kv" id="v-reverb">0.70</div>
+    </div>
+    <div class="kg">
+      <canvas class="knob" id="k-breath"  width="42" height="42" data-min="0"   data-max="1"   data-val="0.5"  data-color="#e8f4ff"></canvas>
+      <div class="kl">Breath</div><div class="kv" id="v-breath">0.50</div>
+    </div>
+    <div class="kg">
+      <canvas class="knob" id="k-shimmer" width="42" height="42" data-min="0"   data-max="1"   data-val="0.55" data-color="#88aaee"></canvas>
+      <div class="kl">Shimmer</div><div class="kv" id="v-shimmer">0.55</div>
+    </div>
+    <div class="kg">
+      <canvas class="knob" id="k-formant" width="42" height="42" data-min="0"   data-max="1"   data-val="0.45" data-color="#ffd0c0"></canvas>
+      <div class="kl">Formant</div><div class="kv" id="v-formant">0.45</div>
+    </div>
+
+    <div class="cdiv"></div>
+
+    <!-- Breath slider (drag up/down like a continuous blow) -->
+    <div style="display:flex;flex-direction:column;gap:3px;">
+      <div style="font-family:var(--mono);font-size:7px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;">Pitch</div>
+      <div style="display:flex;gap:4px;">
+        <button id="btn-lo"  style="font-family:var(--mono);font-size:8px;letter-spacing:1px;padding:4px 8px;border:1px solid var(--text3);border-radius:2px;color:var(--text2);background:transparent;cursor:pointer;" data-pitch="lo">Low</button>
+        <button id="btn-mid" style="font-family:var(--mono);font-size:8px;letter-spacing:1px;padding:4px 8px;border:1px solid rgba(200,232,255,.4);border-radius:2px;color:var(--seelie2);background:rgba(200,232,255,.05);cursor:pointer;" data-pitch="mid">Mid</button>
+        <button id="btn-hi"  style="font-family:var(--mono);font-size:8px;letter-spacing:1px;padding:4px 8px;border:1px solid var(--text3);border-radius:2px;color:var(--text2);background:transparent;cursor:pointer;" data-pitch="hi">High</button>
+      </div>
+    </div>
+
+    <div class="cdiv"></div>
+
+    <div id="note-display">
+      <div id="note-name">—</div>
+      <div id="spell-display">ready to blow</div>
+      <div id="court-display">Seelie Court</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// TÍDHE — The Enchanted Conch
+// Three Courts of Fae · Real Conch Acoustics · Spell System
+// ══════════════════════════════════════════════════════════════
+
+let actx = null, convolver = null, analyser = null;
+const holdNodes = new Map();
+let breathLevel  = 0;   // 0–1, controlled by drag
+let breathDragging = false;
+let breathDragStartX = 0, breathDragStartVal = 0;
+
+// ── Court state ──
+let activeCourt = 'seelie';
+const COURTS = {
+  seelie:   { name:'Seelie Court',   color:'#c8e8ff', color2:'#e8f4ff', glow:'rgba(200,232,255,.35)', dim:'rgba(200,232,255,.0)', desc:'moonlight & grace' },
+  unseelie: { name:'Unseelie Court', color:'#8040c0', color2:'#b060ff', glow:'rgba(128,64,192,.35)',  dim:'rgba(128,64,192,.0)',  desc:'shadows & hunger' },
+  wild:     { name:'Wild Court',     color:'#40c060', color2:'#70e090', glow:'rgba(64,192,96,.35)',   dim:'rgba(64,192,96,.0)',   desc:'root & thorn' },
+};
+
+// ── Pitch register ──
+let pitchReg = 'mid'; // lo / mid / hi
+const PITCH_BASE = { lo: 120, mid: 240, hi: 480 }; // conch fundamental Hz
+
+function getCtx() {
+  if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+  if (actx.state === 'suspended') actx.resume();
+  if (!convolver) buildReverb();
+  if (!analyser) {
+    analyser = actx.createAnalyser(); analyser.fftSize = 512;
+    analyser.connect(actx.destination);
+  }
+  return actx;
+}
+
+const P = { reverb: 0.7, breath: 0.5, shimmer: 0.55, formant: 0.45 };
+
+const SPELL_NAMES = {
+  'blow-long':'Long Blow','blow-short':'Short Blow','trill':'Trill','overtone':'Overtone',
+  'summon':'Summon','ward':'Ward','lament':'Lament','wild-call':'Wild Call',
+};
+
+// ══════════════════════════════════════════════════════════════
+// REVERB: enchanted forest glade — long, diffuse, alive
+// ══════════════════════════════════════════════════════════════
+function buildReverb() {
+  const c = actx;
+  const dur = 6.0;
+  const len = c.sampleRate * dur;
+  const buf = c.createBuffer(2, len, c.sampleRate);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = buf.getChannelData(ch);
+    for (let i = 0; i < len; i++) {
+      // Organic reverb: slight density variation like trees diffusing sound
+      const env = Math.pow(1-i/len, 1.15);
+      d[i] = (Math.random()*2-1)*env*(0.6+0.4*Math.sin(i*0.00017));
+    }
+  }
+  if (convolver) try { convolver.disconnect(); } catch(e){}
+  convolver = c.createConvolver(); convolver.buffer = buf;
+  convolver.connect(c.destination);
+}
+
+function routeOut(c, node) {
+  const dry=c.createGain(); dry.gain.value=1-P.reverb*0.88;
+  const wet=c.createGain(); wet.gain.value=P.reverb*0.88;
+  node.connect(dry); dry.connect(analyser);
+  node.connect(wet); wet.connect(convolver);
+  return {dry,wet};
+}
+
+// ══════════════════════════════════════════════════════════════
+// CONCH SHELL ACOUSTICS
+// A conch is a closed cylindrical-conical resonator
+// Fundamental: ~150–300Hz depending on size
+// Strong odd harmonics: 1x, 3x, 5x, 7x (closed pipe physics)
+// Airy turbulence from the lip
+// Court coloring: seelie=bright harmonics, unseelie=dark subharmonics, wild=formant shift
+// ══════════════════════════════════════════════════════════════
+function synthConch(c, vel, duration, freq, isHold=false) {
+  const now = c.currentTime;
+  const nodes = [];
+  const master = c.createGain();
+  master.gain.setValueAtTime(0, now);
+
+  const ct = COURTS[activeCourt];
+
+  // ── Attack envelope ──
+  const attackTime = 0.08 + (1-vel)*0.15; // faster blow = sharper attack
+  master.gain.linearRampToValueAtTime(vel*0.75, now+attackTime);
+  if (!isHold) {
+    master.gain.setValueAtTime(vel*0.75, now+duration-0.08);
+    master.gain.exponentialRampToValueAtTime(0.001, now+duration+0.05);
+  }
+
+  // ── FUNDAMENTAL + Odd harmonics (closed pipe) ──
+  const harmonics = activeCourt === 'unseelie'
+    ? [0.5, 1, 2, 3, 5, 7]         // unseelie: adds dark sub-octave
+    : activeCourt === 'wild'
+    ? [1, 2, 3, 4, 5, 6, 7, 9]     // wild: more even harmonics, wilder
+    : [1, 3, 5, 7, 9, 11];          // seelie: classic closed-pipe odd partials
+
+  const baseAmps = activeCourt === 'unseelie'
+    ? [0.25, 0.6, 0.18, 0.12, 0.06, 0.03]
+    : activeCourt === 'wild'
+    ? [0.55, 0.25, 0.18, 0.12, 0.08, 0.05, 0.03, 0.015]
+    : [0.65, 0.3, 0.16, 0.08, 0.04, 0.02];
+
+  harmonics.forEach((h, i) => {
+    const osc = c.createOscillator();
+    osc.type = h <= 1 ? 'triangle' : 'sine';
+    osc.frequency.value = freq * h;
+    osc.detune.value = (Math.random()-0.5)*2;
+
+    // Shimmer: per-harmonic slow LFO detune drift
+    if (P.shimmer > 0.05) {
+      const lfo = c.createOscillator();
+      lfo.frequency.value = 0.15 + Math.random()*0.12 + i*0.04;
+      const lfoG = c.createGain();
+      lfoG.gain.value = P.shimmer * (2 + h*0.8);
+      lfo.connect(lfoG); lfoG.connect(osc.detune);
+      lfo.start(now); nodes.push(lfo);
+    }
+
+    const g = c.createGain();
+    // Higher harmonics fade faster (natural string/pipe behavior)
+    const hDecay = 1.0 - i*0.12;
+    g.gain.setValueAtTime(baseAmps[i]*vel, now+attackTime);
+    if (!isHold) g.gain.exponentialRampToValueAtTime(0.001, now+duration*hDecay);
+
+    osc.connect(g); g.connect(master);
+    osc.start(now);
+    if (!isHold) osc.stop(now+duration+0.1);
+    nodes.push(osc);
+  });
+
+  // ── BREATH / AIR TURBULENCE ──
+  if (P.breath > 0.05) {
+    const nbLen = isHold ? c.sampleRate*3 : Math.floor(c.sampleRate*(duration+0.1));
+    const nb = c.createBuffer(1, nbLen, c.sampleRate);
+    const nd = nb.getChannelData(0);
+    // Pink-ish noise for breath character
+    let b0=0,b1=0,b2=0;
+    for(let i=0;i<nd.length;i++){
+      const w=Math.random()*2-1;
+      b0=0.99*b0+w*0.08; b1=0.95*b1+w*0.15; b2=0.88*b2+w*0.22;
+      nd[i]=(b0+b1+b2)*0.28;
+    }
+    const nbSrc = c.createBufferSource();
+    nbSrc.buffer=nb; nbSrc.loop=isHold;
+    // Bandpass breath around aperture resonance
+    const bpf=c.createBiquadFilter(); bpf.type='bandpass';
+    bpf.frequency.value=freq*1.8; bpf.Q.value=0.7;
+    const breathG=c.createGain();
+    breathG.gain.setValueAtTime(vel*P.breath*0.35, now+attackTime*0.5);
+    if (!isHold) breathG.gain.exponentialRampToValueAtTime(0.001, now+duration*0.7);
+    nbSrc.connect(bpf); bpf.connect(breathG); breathG.connect(master);
+    nbSrc.start(now);
+    if (!isHold) nbSrc.stop(now+duration+0.1);
+    nodes.push(nbSrc);
+  }
+
+  // ── FORMANT SHAPING (court-specific) ──
+  const filt1=c.createBiquadFilter(); filt1.type='bandpass';
+  const filt2=c.createBiquadFilter(); filt2.type='peaking';
+  filt2.gain.value=6;
+
+  switch(activeCourt) {
+    case 'seelie':
+      // Bright, clear, bell-like upper partials
+      filt1.frequency.value=freq*(3+P.formant*4); filt1.Q.value=1.5;
+      filt2.frequency.value=freq*7; filt2.Q.value=2;
+      break;
+    case 'unseelie':
+      // Dark, hollow, emphasize fundamentals and low mids
+      filt1.frequency.value=freq*(1.2+P.formant*1.5); filt1.Q.value=2.5;
+      filt2.frequency.value=freq*0.5; filt2.Q.value=1.8;
+      break;
+    case 'wild':
+      // Mid-forward, reedy, alive
+      filt1.frequency.value=freq*(2+P.formant*3); filt1.Q.value=1.8;
+      filt2.frequency.value=freq*4; filt2.Q.value=2.2;
+      break;
+  }
+
+  const filtMix=c.createGain(); filtMix.gain.value=0.4;
+  master.connect(filt1); filt1.connect(filtMix);
+  master.connect(filt2); filt2.connect(filtMix);
+
+  // Combine direct + filtered
+  const outGain=c.createGain(); outGain.gain.value=1;
+  master.connect(outGain); filtMix.connect(outGain);
+
+  routeOut(c, outGain);
+
+  return { master, nodes };
+}
+
+// ══════════════════════════════════════════════════════════════
+// SPELL SYNTHESIS
+// Each spell = a different blowing technique + court coloring
+// ══════════════════════════════════════════════════════════════
+
+function castSpell(spell, vel) {
+  const c = getCtx();
+  const freq = PITCH_BASE[pitchReg];
+  const isHold = document.querySelector(`.spell[data-spell="${spell}"]`)?.dataset.hold === '1';
+
+  if (isHold) {
+    if (holdNodes.has(spell)) {
+      stopHold(spell); return;
+    }
+  }
+
+  let voice;
+
+  switch(spell) {
+
+    case 'blow-long': {
+      // Sustained fundamental — the classic conch call
+      voice = synthConch(c, vel, 0, freq, true);
+      // Slow swell
+      voice.master.gain.setValueAtTime(0, c.currentTime);
+      voice.master.gain.linearRampToValueAtTime(vel*0.75, c.currentTime+1.2);
+      break;
+    }
+
+    case 'blow-short': {
+      // Single sharp honk
+      synthConch(c, vel, 0.7, freq, false);
+      spellFX(c, freq, vel, 'honk');
+      break;
+    }
+
+    case 'trill': {
+      // Rapid alternation between fundamental and 3rd harmonic
+      const count = 8;
+      for(let i=0;i<count;i++){
+        const t=i*0.1;
+        setTimeout(()=>{
+          const c2=getCtx();
+          synthConch(c2, vel*(0.6+Math.random()*0.3), 0.18,
+            i%2===0 ? freq : freq*1.5, false);
+        }, t*1000);
+      }
+      break;
+    }
+
+    case 'overtone': {
+      // Sustained overtone blow — overblown upper partial
+      voice = synthConch(c, vel*0.7, 0, freq*3, true);
+      voice.master.gain.setValueAtTime(0, c.currentTime);
+      voice.master.gain.linearRampToValueAtTime(vel*0.55, c.currentTime+0.4);
+      // Add shimmer extra
+      addOvertoneShimmer(c, freq, vel);
+      break;
+    }
+
+    case 'summon': {
+      // Rising call — pitch glide upward
+      spellFX(c, freq, vel, 'summon');
+      break;
+    }
+
+    case 'ward': {
+      // Low drone + pulsing harmonics
+      voice = synthConch(c, vel*0.6, 0, freq*0.5, true);
+      voice.master.gain.setValueAtTime(0, c.currentTime);
+      voice.master.gain.linearRampToValueAtTime(vel*0.5, c.currentTime+0.8);
+      addWardPulse(c, freq, vel);
+      break;
+    }
+
+    case 'lament': {
+      // Descending slow blow, mournful
+      spellFX(c, freq, vel, 'lament');
+      break;
+    }
+
+    case 'wild-call': {
+      // Multiphonic — two pitches at once, nature-like
+      voice = synthConch(c, vel*0.6, 0, freq, true);
+      voice.master.gain.setValueAtTime(0, c.currentTime);
+      voice.master.gain.linearRampToValueAtTime(vel*0.5, c.currentTime+0.5);
+      const v2 = synthConch(c, vel*0.4, 0, freq*1.498, true); // near-fifth
+      v2.master.gain.setValueAtTime(0, c.currentTime);
+      v2.master.gain.linearRampToValueAtTime(vel*0.35, c.currentTime+0.7);
+      // Store both as one hold
+      if (voice) {
+        voice.nodes.push(...(v2?.nodes||[]));
+        const origMaster = voice.master;
+        voice._v2 = v2;
+      }
+      break;
+    }
+  }
+
+  if (isHold && voice) holdNodes.set(spell, voice);
+  updateSpellDisplay(spell);
+  pulseShell(vel);
+  addBreathRing();
+  addMotes(vel);
+}
+
+function stopHold(spell) {
+  const h = holdNodes.get(spell);
+  if (!h) return;
+  const c = actx; const now = c.currentTime;
+  h.master.gain.setTargetAtTime(0, now, 0.3);
+  if (h._v2) h._v2.master.gain.setTargetAtTime(0, now, 0.3);
+  setTimeout(()=>{ h.nodes.forEach(n=>{try{n.stop()}catch(e){}}) }, 2000);
+  holdNodes.delete(spell);
+  const padEl = document.querySelector(`.spell[data-spell="${spell}"]`);
+  if (padEl) padEl.classList.remove('hold-on');
+}
+
+// ── Special spell FX ──
+function spellFX(c, freq, vel, type) {
+  const now = c.currentTime;
+  switch(type) {
+    case 'honk': {
+      const osc=c.createOscillator(); osc.type='triangle'; osc.frequency.value=freq;
+      const g=c.createGain(); g.gain.setValueAtTime(vel*0.8,now); g.gain.exponentialRampToValueAtTime(0.001,now+0.5);
+      osc.connect(g); routeOut(c,g); osc.start(now); osc.stop(now+0.55);
+      break;
+    }
+    case 'summon': {
+      const osc=c.createOscillator(); osc.type='triangle';
+      osc.frequency.setValueAtTime(freq*0.6, now);
+      osc.frequency.exponentialRampToValueAtTime(freq*2.5, now+1.4);
+      const g=c.createGain(); g.gain.setValueAtTime(0,now); g.gain.linearRampToValueAtTime(vel*0.7,now+0.2);
+      g.gain.setValueAtTime(vel*0.7,now+1.1); g.gain.exponentialRampToValueAtTime(0.001,now+1.6);
+      const nb=c.createBufferSource(); const nbBuf=c.createBuffer(1,Math.floor(c.sampleRate*1.6),c.sampleRate);
+      const nd=nbBuf.getChannelData(0); for(let i=0;i<nd.length;i++)nd[i]=(Math.random()*2-1)*0.3;
+      nb.buffer=nbBuf;
+      const bpf=c.createBiquadFilter();bpf.type='bandpass';bpf.frequency.value=freq*1.5;bpf.Q.value=1;
+      const bg=c.createGain();bg.gain.setValueAtTime(vel*P.breath*0.3,now);bg.gain.exponentialRampToValueAtTime(0.001,now+1.4);
+      nb.connect(bpf);bpf.connect(bg);
+      osc.connect(g); routeOut(c,g); bg.connect(g);
+      osc.start(now); osc.stop(now+1.7); nb.start(now); nb.stop(now+1.65);
+      break;
+    }
+    case 'lament': {
+      const osc=c.createOscillator(); osc.type='triangle';
+      osc.frequency.setValueAtTime(freq*1.5, now);
+      osc.frequency.exponentialRampToValueAtTime(freq*0.7, now+2.2);
+      const vib=c.createOscillator(); vib.frequency.value=4.5;
+      const vibG=c.createGain(); vibG.gain.value=6;
+      vib.connect(vibG); vibG.connect(osc.frequency);
+      const g=c.createGain(); g.gain.setValueAtTime(0,now); g.gain.linearRampToValueAtTime(vel*0.6,now+0.3);
+      g.gain.setValueAtTime(vel*0.6,now+1.8); g.gain.exponentialRampToValueAtTime(0.001,now+2.4);
+      osc.connect(g); routeOut(c,g);
+      osc.start(now); osc.stop(now+2.5); vib.start(now); vib.stop(now+2.5);
+      break;
+    }
+  }
+}
+
+function addOvertoneShimmer(c, freq, vel) {
+  const now = c.currentTime;
+  [5,7,9,11,13].forEach((h,i)=>{
+    const osc=c.createOscillator(); osc.type='sine'; osc.frequency.value=freq*h;
+    const lfo=c.createOscillator(); lfo.frequency.value=0.3+i*0.15;
+    const lfoG=c.createGain(); lfoG.gain.value=P.shimmer*h*1.5;
+    lfo.connect(lfoG); lfoG.connect(osc.detune);
+    const g=c.createGain(); g.gain.value=vel*0.04/(i+1);
+    osc.connect(g); routeOut(c,g);
+    osc.start(now); osc.stop(now+8); lfo.start(now); lfo.stop(now+8);
+  });
+}
+
+function addWardPulse(c, freq, vel) {
+  const now=c.currentTime;
+  [0,0.6,1.2,1.8,2.4].forEach(t=>{
+    const osc=c.createOscillator();osc.type='sine';osc.frequency.value=freq;
+    const g=c.createGain();
+    g.gain.setValueAtTime(0,now+t);g.gain.linearRampToValueAtTime(vel*0.3,now+t+0.12);
+    g.gain.exponentialRampToValueAtTime(0.001,now+t+0.5);
+    osc.connect(g);routeOut(c,g);osc.start(now+t);osc.stop(now+t+0.55);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// VISUAL FEEDBACK
+// ══════════════════════════════════════════════════════════════
+function pulseShell(vel) {
+  const svg = document.getElementById('conch-svg');
+  const aper = document.getElementById('aperture-glow');
+  const ench = document.getElementById('enchant-ellipse');
+  const runes = document.getElementById('rune-group');
+  const ct = COURTS[activeCourt];
+
+  svg.classList.add('breathing');
+
+  // Update enchant glow color
+  const centerStop = document.getElementById('glow-center');
+  if (centerStop) centerStop.setAttribute('stop-color', ct.glow.replace('.35','.6'));
+
+  aper.setAttribute('fill', ct.glow);
+  ench.setAttribute('opacity', (vel*0.7).toFixed(2));
+  runes.setAttribute('opacity', (vel*0.8).toFixed(2));
+
+  // Stage glow
+  const sg = document.getElementById('stage-glow');
+  sg.style.background=`radial-gradient(ellipse 60% 70% at 50% 52%, ${ct.glow} 0%, transparent 70%)`;
+
+  clearTimeout(window._shellT);
+  window._shellT = setTimeout(()=>{
+    aper.setAttribute('fill','rgba(200,232,255,.0)');
+    ench.setAttribute('opacity','0');
+    runes.setAttribute('opacity','0');
+    sg.style.background=`radial-gradient(ellipse 60% 70% at 50% 52%, ${ct.dim} 0%, transparent 70%)`;
+    if(holdNodes.size===0) svg.classList.remove('breathing');
+  }, 1200);
+}
+
+function addBreathRing() {
+  const wrap = document.getElementById('conch-wrap');
+  const ring = document.createElement('div');
+  ring.className='breath-ring';
+  ring.style.left='50%'; ring.style.top='50%';
+  ring.style.borderColor=COURTS[activeCourt].glow.replace('.35','.5');
+  wrap.appendChild(ring);
+  setTimeout(()=>ring.remove(), 1500);
+}
+
+function addMotes(vel) {
+  const mg = document.getElementById('mote-group');
+  const ct = COURTS[activeCourt];
+  const count = Math.floor(vel*5)+2;
+  for(let i=0;i<count;i++){
+    setTimeout(()=>{
+      const cx = 60+Math.random()*200;
+      const cy = 80+Math.random()*140;
+      const r  = Math.random()*3+1;
+      const c  = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('cx',cx); c.setAttribute('cy',cy); c.setAttribute('r',r);
+      c.setAttribute('fill',ct.glow.replace('.35',`${0.3+Math.random()*0.5}`));
+      c.style.animation=`motedrift ${0.8+Math.random()*1.2}s ease-out forwards`;
+      mg.appendChild(c);
+      setTimeout(()=>c.remove(),2200);
+    },i*80);
+  }
+}
+
+// ── Court switching ──
+function setCourt(court) {
+  activeCourt = court;
+  const ct = COURTS[court];
+
+  // Update logo and header
+  document.getElementById('logo').style.color   = ct.color;
+  document.getElementById('logo').style.textShadow = `0 0 22px ${ct.color}, 0 0 60px ${ct.glow}`;
+  document.getElementById('court-display').textContent = ct.name;
+  document.getElementById('court-display').style.color = ct.color.replace('ff','66');
+  document.getElementById('hs-court').textContent = court.charAt(0).toUpperCase()+court.slice(1);
+
+  // Power dot
+  document.getElementById('power-dot').style.background = ct.color;
+  document.getElementById('power-dot').style.boxShadow  = `0 0 8px ${ct.color}, 0 0 24px ${ct.glow}`;
+
+  // Breath fill
+  document.getElementById('breath-fill').style.background =
+    `linear-gradient(90deg, ${ct.glow.replace('.35','.3')}, ${ct.glow.replace('.35','.7')})`;
+
+  // Spell pads
+  document.querySelectorAll('.spell').forEach(s=>{
+    s.style.setProperty('--court-color', ct.color);
+  });
+
+  // Knob accent
+  document.querySelectorAll('canvas.knob').forEach((k,i)=>{
+    const colors=[ct.color, ct.color2||ct.color, '#88aaee','#ffd0c0'];
+    k.dataset.color=colors[i]||ct.color;
+    // Redraw
+    k.dispatchEvent(new Event('redraw'));
+  });
+
+  document.getElementById('court-display').textContent = `${ct.name} · ${ct.desc}`;
+}
+
+// ── Breath bar drag ──
+function setupBreathBar() {
+  const outer = document.getElementById('breath-outer');
+
+  function updateBreath(pct) {
+    breathLevel = Math.max(0,Math.min(1,pct));
+    document.getElementById('breath-fill').style.width=(breathLevel*100)+'%';
+    document.getElementById('hs-breath').textContent=Math.round(breathLevel*100)+'%';
+    document.getElementById('hs-breath').className='lit';
+    // If holding a long blow, update its gain
+    if(holdNodes.has('blow-long')){
+      const h=holdNodes.get('blow-long');
+      if(actx) h.master.gain.setTargetAtTime(breathLevel*0.75, actx.currentTime, 0.05);
+    }
+  }
+
+  outer.addEventListener('mousedown',e=>{breathDragging=true;breathDragStartX=e.clientX;breathDragStartVal=breathLevel;e.preventDefault();});
+  window.addEventListener('mousemove',e=>{
+    if(!breathDragging)return;
+    const rect=outer.getBoundingClientRect();
+    updateBreath((e.clientX-rect.left)/rect.width);
+  });
+  window.addEventListener('mouseup',()=>{breathDragging=false;});
+  outer.addEventListener('touchstart',e=>{breathDragging=true;breathDragStartX=e.touches[0].clientX;breathDragStartVal=breathLevel;e.preventDefault();},{passive:false});
+  window.addEventListener('touchmove',e=>{
+    if(!breathDragging)return;
+    const rect=outer.getBoundingClientRect();
+    updateBreath((e.touches[0].clientX-rect.left)/rect.width);
+  },{passive:false});
+  window.addEventListener('touchend',()=>{breathDragging=false;});
+
+  // Click on conch = blow at current breath level
+  document.getElementById('conch-svg').addEventListener('click',()=>{
+    getCtx();
+    castSpell('blow-short', 0.4+breathLevel*0.6);
+  });
+}
+
+// ── Update displays ──
+function updateSpellDisplay(spell) {
+  const name=SPELL_NAMES[spell]||spell;
+  document.getElementById('note-name').textContent=name.split(' ')[0];
+  document.getElementById('spell-display').textContent=name;
+  const ct=COURTS[activeCourt];
+  document.getElementById('note-name').style.color=ct.color2||ct.color;
+  document.getElementById('note-name').style.textShadow=`0 0 16px ${ct.color}`;
+  document.getElementById('hs-spell').textContent=name;
+  document.getElementById('hs-spell').className='lit';
+  document.getElementById('power-dot').classList.add('on');
+  clearTimeout(window._dotT);
+  window._dotT=setTimeout(()=>{ if(holdNodes.size===0) document.getElementById('power-dot').classList.remove('on'); },500);
+}
+
+// ── Pad events ──
+document.querySelectorAll('.spell').forEach(pad=>{
+  pad.addEventListener('mousedown',e=>{
+    e.preventDefault(); getCtx();
+    const vel=0.5+breathLevel*0.5;
+    castSpell(pad.dataset.spell, vel);
+    pad.classList.add('hit');
+    clearTimeout(pad._t); pad._t=setTimeout(()=>pad.classList.remove('hit'),150);
+    if(pad.dataset.hold==='1'){
+      setTimeout(()=>{ if(holdNodes.has(pad.dataset.spell)) pad.classList.add('hold-on'); else pad.classList.remove('hold-on'); },50);
+    }
+  });
+  pad.addEventListener('touchstart',e=>{
+    e.preventDefault(); getCtx();
+    const vel=0.5+breathLevel*0.5;
+    castSpell(pad.dataset.spell, vel);
+    pad.classList.add('hit');
+    clearTimeout(pad._t); pad._t=setTimeout(()=>pad.classList.remove('hit'),150);
+    if(pad.dataset.hold==='1'){
+      setTimeout(()=>{ if(holdNodes.has(pad.dataset.spell)) pad.classList.add('hold-on'); else pad.classList.remove('hold-on'); },50);
+    }
+  },{passive:false});
+});
+
+// ── Court buttons ──
+document.querySelectorAll('.court-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.court-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); setCourt(btn.dataset.court);
+  });
+});
+
+// ── Pitch buttons ──
+document.querySelectorAll('[data-pitch]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    pitchReg=btn.dataset.pitch;
+    document.querySelectorAll('[data-pitch]').forEach(b=>{
+      b.style.borderColor='var(--text3)';b.style.color='var(--text2)';b.style.background='transparent';
+    });
+    btn.style.borderColor=COURTS[activeCourt].color;
+    btn.style.color=COURTS[activeCourt].color2||COURTS[activeCourt].color;
+    btn.style.background=`rgba(200,232,255,.05)`;
+  });
+});
+
+// ── Keyboard ──
+const KB_MAP={q:'blow-long',w:'blow-short',e:'trill',r:'overtone',a:'summon',s:'ward',d:'lament',f:'wild-call'};
+document.addEventListener('keydown',e=>{
+  if(e.repeat||e.target.tagName==='INPUT')return;
+  const key=e.key.toLowerCase();
+  if(KB_MAP[key]){
+    getCtx();
+    const vel=0.5+breathLevel*0.5;
+    const pad=document.querySelector(`.spell[data-spell="${KB_MAP[key]}"]`);
+    castSpell(KB_MAP[key],vel);
+    if(pad){pad.classList.add('hit');clearTimeout(pad._t);pad._t=setTimeout(()=>pad.classList.remove('hit'),150);}
+  }
+  // Court shortcuts
+  if(key==='1'){document.querySelector('.court-btn[data-court="seelie"]').click();}
+  if(key==='2'){document.querySelector('.court-btn[data-court="unseelie"]').click();}
+  if(key==='3'){document.querySelector('.court-btn[data-court="wild"]').click();}
+});
+
+// ── Knobs ──
+function setupKnobs(){
+  document.querySelectorAll('canvas.knob').forEach(canvas=>{
+    const id=canvas.id;
+    const min=parseFloat(canvas.dataset.min),max=parseFloat(canvas.dataset.max);
+    let val=parseFloat(canvas.dataset.val);
+    let color=canvas.dataset.color||'#c8e8ff';
+    const valEl=document.getElementById('v-'+id.replace('k-',''));
+
+    function draw(){
+      color=canvas.dataset.color||'#c8e8ff';
+      const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height,cx=w/2,cy=h/2,r=w*0.38;
+      ctx.clearRect(0,0,w,h);
+      const sA=Math.PI*0.75,eA=Math.PI*2.25,t=(val-min)/(max-min),cA=sA+t*(eA-sA);
+      ctx.beginPath();ctx.arc(cx,cy,r,sA,eA);ctx.strokeStyle='#2a2438';ctx.lineWidth=3;ctx.lineCap='round';ctx.stroke();
+      ctx.beginPath();ctx.arc(cx,cy,r,sA,cA);ctx.strokeStyle=color;ctx.lineWidth=3;ctx.stroke();
+      const dx=cx+r*Math.cos(cA),dy=cy+r*Math.sin(cA);
+      ctx.beginPath();ctx.arc(dx,dy,2.5,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+      ctx.beginPath();ctx.arc(cx,cy,3,0,Math.PI*2);ctx.fillStyle='#1e1830';ctx.fill();
+      ctx.beginPath();ctx.arc(cx,cy,1.5,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+    }
+
+    let dragY=null,dragVal=null;
+    canvas.addEventListener('mousedown',e=>{dragY=e.clientY;dragVal=val;e.preventDefault();});
+    document.addEventListener('mousemove',e=>{
+      if(dragY===null)return;
+      val=Math.max(min,Math.min(max,dragVal+(dragY-e.clientY)*(max-min)/120));
+      draw();onKnob(id,val,valEl);
+    });
+    document.addEventListener('mouseup',()=>{dragY=null;});
+    canvas.addEventListener('redraw',()=>draw());
+    draw();onKnob(id,val,valEl);
+  });
+}
+function onKnob(id,val,el){
+  const map={
+    'k-reverb':  v=>{P.reverb=v;  el.textContent=v.toFixed(2);},
+    'k-breath':  v=>{P.breath=v;  el.textContent=v.toFixed(2);},
+    'k-shimmer': v=>{P.shimmer=v; el.textContent=v.toFixed(2);},
+    'k-formant': v=>{P.formant=v; el.textContent=v.toFixed(2);},
+  };
+  if(map[id])map[id](val);
+}
+
+// ── WAVEFORM ──
+const waveCanvas=document.getElementById('wave-canvas');
+const wCtx=waveCanvas.getContext('2d');
+function resizeWave(){waveCanvas.width=waveCanvas.offsetWidth;waveCanvas.height=waveCanvas.offsetHeight;}
+function drawWave(){
+  requestAnimationFrame(drawWave);
+  const W=waveCanvas.width,H=waveCanvas.height;
+  wCtx.clearRect(0,0,W,H);
+  if(!analyser)return;
+  const buf=new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteTimeDomainData(buf);
+  const ct=COURTS[activeCourt];
+  wCtx.strokeStyle=`${ct.glow.replace('.35','.6')}`;
+  wCtx.lineWidth=1.2;
+  wCtx.shadowColor=ct.color; wCtx.shadowBlur=5;
+  wCtx.beginPath();
+  const step=W/buf.length;
+  for(let i=0;i<buf.length;i++){const x=i*step,y=(buf[i]/128-1)*(H*0.42)+H/2;i===0?wCtx.moveTo(x,y):wCtx.lineTo(x,y);}
+  wCtx.stroke(); wCtx.shadowBlur=0;
+}
+
+// ── ATMOSPHERE: floating fairy motes ──
+const atmosCanvas=document.getElementById('atmos');
+const aCtx=atmosCanvas.getContext('2d');
+let faeMotes=[];
+function initAtmos(){
+  atmosCanvas.width=window.innerWidth;atmosCanvas.height=window.innerHeight;
+  faeMotes=Array.from({length:55},()=>({
+    x:Math.random()*atmosCanvas.width,
+    y:Math.random()*atmosCanvas.height,
+    r:Math.random()*.9+.15,
+    sp:Math.random()*.08+.01,
+    o:Math.random()*.12+.015,
+    t:Math.random()*Math.PI*2,
+    drift:(Math.random()-.5)*.3,
+    court:['seelie','unseelie','wild'][Math.floor(Math.random()*3)],
+  }));
+}
+function drawAtmos(){
+  requestAnimationFrame(drawAtmos);
+  aCtx.clearRect(0,0,atmosCanvas.width,atmosCanvas.height);
+  faeMotes.forEach(p=>{
+    p.t+=p.sp*.016;
+    p.x+=p.drift+Math.sin(p.t*.5)*.2;
+    p.y+=Math.cos(p.t*.3)*.15-p.sp*.05;
+    if(p.y<-4){p.y=atmosCanvas.height+4;}
+    if(p.y>atmosCanvas.height+4){p.y=-4;}
+    if(p.x<-4)p.x=atmosCanvas.width+4;
+    if(p.x>atmosCanvas.width+4)p.x=-4;
+    const flicker=p.o*(0.5+0.5*Math.sin(p.t*3.2));
+    const ct=COURTS[p.court];
+    aCtx.beginPath();aCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    aCtx.fillStyle=ct.glow.replace('.35',`${flicker}`);
+    aCtx.fill();
+  });
+}
+
+// ── Cursor ──
+const cursor=document.getElementById('cursor');
+document.addEventListener('mousemove',e=>{cursor.style.left=e.clientX+'px';cursor.style.top=e.clientY+'px';});
+
+// ── Mote CSS animation ──
+const moteCss=document.createElement('style');
+moteCss.textContent=`@keyframes motedrift{0%{opacity:.9;transform:translate(0,0) scale(1);}100%{opacity:0;transform:translate(${(Math.random()-0.5)*60}px,${-30-Math.random()*40}px) scale(0.3);}}`;
+document.head.appendChild(moteCss);
+
+window.addEventListener('resize',()=>{resizeWave();initAtmos();});
+
+setupKnobs();
+setupBreathBar();
+resizeWave();
+initAtmos();
+drawAtmos();
+drawWave();
+setCourt('seelie');
+</script>
+</body>
+</html>
